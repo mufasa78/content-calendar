@@ -6,3 +6,4 @@ vite.config.ts.*
 *.tar.gz
 .env
 .env.local
+# Deployment files (keep .env.production as template - no secrets)

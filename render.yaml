@@ -1,0 +1,41 @@
+services:
+  # Web Service (Node.js App)
+  - type: web
+    name: malaica-calendar
+    runtime: node
+    plan: starter
+    region: oregon
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: malaica-calendar-db
+          property: connectionString
+      - key: CLERK_PUBLISHABLE_KEY
+        sync: false
+      - key: CLERK_SECRET_KEY
+        sync: false
+      - key: VITE_CLERK_PUBLISHABLE_KEY
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_REDIRECT_URI
+        value: https://malaica-calendar.onrender.com/api/google/callback
+      - key: API_KEY
+        sync: false
+
+  # PostgreSQL Database
+  - type: pgsql
+    name: malaica-calendar-db
+    plan: starter
+    region: oregon
+    databaseName: malaica_calendar
+    databaseUser: malaica_user
