@@ -3,15 +3,16 @@ export function isUnauthorizedError(error: Error): boolean {
 }
 
 // Redirect to login with a toast notification
+// Note: With Clerk, authentication is handled by ClerkProvider
+// Users will be automatically redirected to sign in when needed
 export function redirectToLogin(toast?: (options: { title: string; description: string; variant: string }) => void) {
   if (toast) {
     toast({
       title: "Unauthorized",
-      description: "You are logged out. Logging in again...",
+      description: "Please sign in to continue.",
       variant: "destructive",
     });
   }
-  setTimeout(() => {
-    window.location.href = "/api/login";
-  }, 500);
+  // Clerk handles authentication redirects automatically
+  window.location.href = "/";
 }

@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, boolean, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, boolean, jsonb, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 // Import auth models to ensure they are included in the schema
@@ -10,15 +10,18 @@ export const contentItems = pgTable("content_items", {
   userId: text("user_id").notNull(), // Links to users.id from auth
   title: text("title").notNull(),
   brief: text("brief"),
-  
+
   // Workflow tracking
   status: text("status").notNull().default("Draft"), // Draft, Review, Scheduled, Published, Repurposed
   kanbanStage: text("kanban_stage").notNull().default("Creation"), // Creation, Curation, Conversation
-  
+
   // Scheduling
   scheduledAt: timestamp("scheduled_at"),
   platform: text("platform").notNull(), // X, LinkedIn, Blog, Email, etc.
-  
+
+  // Google Calendar Integration
+  googleCalendarEventId: text("google_calendar_event_id"), // Stores the Google Calendar event ID for syncing
+
   // Post Intelligence Layer (JSONB for flexibility)
   // Contains: background, mission, vision, purpose, targetAudience, keywords, hashtags, cta, kpiTarget
   intelligence: jsonb("intelligence").$type<{
@@ -39,7 +42,13 @@ export const contentItems = pgTable("content_items", {
 
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => ({
+  // Add indexes for better query performance
+  userIdIdx: index("content_items_user_id_idx").on(table.userId),
+  createdAtIdx: index("content_items_created_at_idx").on(table.createdAt),
+  statusIdx: index("content_items_status_idx").on(table.status),
+  scheduledAtIdx: index("content_items_scheduled_at_idx").on(table.scheduledAt),
+}));
 
 export const insertContentItemSchema = createInsertSchema(contentItems).omit({ 
   id: true, 

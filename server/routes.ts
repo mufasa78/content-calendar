@@ -3,7 +3,8 @@ import type { Server } from "http";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
-import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
+import { clerkAuth, isAuthenticated, registerAuthRoutes } from "./middleware/clerk";
+import googleCalendarRouter from "./routes/google-calendar";
 
 async function seedDatabase() {
   const existingItems = await storage.getContentItems("seed-user"); // Just check if any items exist for a seed user or globally if we want? 
@@ -27,17 +28,17 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  // Setup Authentication
-  await setupAuth(app);
+  // Setup Clerk Authentication
+  app.use(clerkAuth);
   registerAuthRoutes(app);
 
   // Seed Data
   // await seedDatabase(); // Disabled for multi-tenant auth app to avoid clutter
 
   // Content Items API - Protected
-  app.get(api.content.list.path, isAuthenticated, async (req: any, res) => {
+  app.get(api.content.list.path, isAuthenticated, async (req, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.auth!.userId!;
       const items = await storage.getContentItems(userId);
       res.json(items);
     } catch (err) {
@@ -59,10 +60,10 @@ export async function registerRoutes(
     }
   });
 
-  app.post(api.content.create.path, isAuthenticated, async (req: any, res) => {
+  app.post(api.content.create.path, isAuthenticated, async (req, res) => {
     try {
       const input = api.content.create.input.parse(req.body);
-      const userId = req.user.claims.sub;
+      const userId = req.auth!.userId!;
       const newItem = await storage.createContentItem(userId, input);
       res.status(201).json(newItem);
     } catch (err) {
@@ -106,6 +107,9 @@ export async function registerRoutes(
       res.status(500).json({ message: "Internal server error" });
     }
   });
+
+  // Google Calendar API routes
+  app.use('/api/google', googleCalendarRouter);
 
   return httpServer;
 }

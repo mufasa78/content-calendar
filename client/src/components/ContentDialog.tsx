@@ -209,9 +209,9 @@ export function ContentDialog({ open, onOpenChange, initialData, defaultDate }: 
 
                 <div className="space-y-2">
                   <Label>Core Purpose</Label>
-                  <Select 
+                  <Select
                     onValueChange={(val) => form.setValue("intelligence.purpose", val)}
-                    defaultValue={form.getValues("intelligence.purpose")}
+                    defaultValue={form.getValues("intelligence.purpose") as string || undefined}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select purpose" />

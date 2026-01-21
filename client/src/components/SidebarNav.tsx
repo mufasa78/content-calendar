@@ -1,20 +1,15 @@
 import { Link, useLocation } from "wouter";
+import { UserButton } from "@clerk/clerk-react";
 import { cn } from "@/lib/utils";
-import { 
-  CalendarDays, 
-  KanbanSquare, 
-  Settings, 
-  LogOut, 
-  Sparkles,
-  LayoutDashboard
+import {
+  CalendarDays,
+  KanbanSquare,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 
 export function SidebarNav() {
   const [location] = useLocation();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
 
   const navItems = [
     { href: "/calendar", label: "Calendar", icon: CalendarDays },
@@ -24,13 +19,14 @@ export function SidebarNav() {
   return (
     <div className="w-64 h-screen border-r bg-card flex flex-col fixed left-0 top-0 z-20 shadow-xl shadow-black/5">
       <div className="p-6 border-b border-border/50">
-        <div className="flex items-center gap-2 mb-1">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground">
-            <Sparkles className="w-5 h-5" />
-          </div>
-          <h1 className="text-xl font-bold font-display tracking-tight">Malaica</h1>
+        <div className="flex items-center justify-center">
+          <img
+            src="/Malaica-Logo-2025-01-1536x795.png"
+            alt="Malaica Logo"
+            className="h-12 w-auto object-contain"
+          />
         </div>
-        <p className="text-xs text-muted-foreground ml-10">Content OS</p>
+        <p className="text-xs text-muted-foreground text-center mt-2">Content Calendar</p>
       </div>
 
       <nav className="flex-1 p-4 space-y-1">
@@ -55,14 +51,16 @@ export function SidebarNav() {
       </nav>
 
       <div className="p-4 border-t border-border/50">
-        <div className="bg-muted/50 rounded-xl p-4 flex items-center gap-3 mb-4">
-          <Avatar className="h-10 w-10 border-2 border-background shadow-sm">
-            <AvatarImage src={user?.profileImageUrl || undefined} />
-            <AvatarFallback className="bg-primary/10 text-primary font-bold">
-              {user?.firstName?.[0]}{user?.lastName?.[0]}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1 min-w-0">
+        <div className="bg-muted/50 rounded-xl p-4 flex items-center gap-3">
+          <UserButton
+            appearance={{
+              elements: {
+                avatarBox: "h-10 w-10",
+              },
+            }}
+            showName={true}
+          />
+          <div className="flex-1 min-w-0 ml-2">
             <p className="text-sm font-semibold truncate text-foreground">
               {user?.firstName} {user?.lastName}
             </p>
@@ -71,15 +69,6 @@ export function SidebarNav() {
             </p>
           </div>
         </div>
-        
-        <Button 
-          variant="outline" 
-          className="w-full justify-start gap-2 text-muted-foreground hover:text-destructive hover:border-destructive/30 hover:bg-destructive/5"
-          onClick={() => logout()}
-        >
-          <LogOut className="w-4 h-4" />
-          Log Out
-        </Button>
       </div>
     </div>
   );
