@@ -36,10 +36,10 @@ router.get('/callback', async (req, res) => {
     await googleCalendarService.handleCallback(code as string, userId);
     
     // Redirect back to the app with success message
-    res.redirect('http://localhost:8080/calendar?google_connected=true');
+    res.redirect('/calendar?google_connected=true');
   } catch (error) {
     console.error('Error handling OAuth callback:', error);
-    res.redirect('http://localhost:8080/calendar?google_error=true');
+    res.redirect('/calendar?google_error=true');
   }
 });
 

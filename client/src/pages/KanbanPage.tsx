@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { DndContext, DragOverlay, closestCorners, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { DndContext, DragOverlay, closestCorners, KeyboardSensor, PointerSensor, useSensor, useSensors, useDroppable } from "@dnd-kit/core";
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useContent, useUpdateContent } from "@/hooks/use-content";
@@ -20,7 +20,11 @@ export default function KanbanPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
@@ -35,17 +39,24 @@ export default function KanbanPage() {
     if (!over) return;
 
     const activeItem = content?.find(c => c.id === active.id);
-    const overId = over.id;
+    if (!activeItem) return;
+
+    // Get the target column stage
+    let newStage: string | null = null;
     
-    // Determine target column
-    let newStage = overId;
-    // If dropped over an item, find that item's column
-    if (typeof overId === 'number') {
-      const overItem = content?.find(c => c.id === overId);
-      if (overItem) newStage = overItem.kanbanStage;
+    // Check if dropped over a column (useDroppable)
+    if (over.data?.current?.type === 'column') {
+      newStage = over.id;
+    } 
+    // Check if dropped over another item (useSortable)
+    else {
+      const overItem = content?.find(c => c.id === over.id);
+      if (overItem) {
+        newStage = overItem.kanbanStage;
+      }
     }
 
-    if (activeItem && activeItem.kanbanStage !== newStage && COLUMNS.includes(newStage)) {
+    if (newStage && activeItem.kanbanStage !== newStage && COLUMNS.includes(newStage as any)) {
       updateMutation.mutate({ id: activeItem.id, kanbanStage: newStage });
     }
   };
@@ -106,10 +117,21 @@ export default function KanbanPage() {
 }
 
 function Column({ id, title, items, onItemClick }: { id: string, title: string, items: ContentItem[], onItemClick: (item: ContentItem) => void }) {
-  const { setNodeRef } = useSortable({ id });
+  const { setNodeRef, isOver } = useDroppable({ 
+    id,
+    data: {
+      type: 'column',
+    }
+  });
 
   return (
-    <div ref={setNodeRef} className="flex flex-col h-full bg-muted/40 rounded-xl border border-border/50">
+    <div 
+      ref={setNodeRef} 
+      className={cn(
+        "flex flex-col h-full bg-muted/40 rounded-xl border transition-colors",
+        isOver ? "border-primary bg-primary/5" : "border-border/50"
+      )}
+    >
       <div className="p-4 border-b border-border/50 bg-white/50 backdrop-blur-sm rounded-t-xl sticky top-0 z-10 flex items-center justify-between">
         <h3 className="font-bold text-foreground font-display">{title}</h3>
         <span className="bg-primary/10 text-primary text-xs font-bold px-2 py-0.5 rounded-full">
@@ -166,11 +188,11 @@ function Card({ item, onClick }: { item: ContentItem, onClick?: () => void }) {
           <PlatformIcon className="w-3.5 h-3.5" />
         </div>
         <span className={cn(
-          "text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded",
-          item.status === 'Published' ? "bg-emerald-100 text-emerald-700" :
-          item.status === 'Scheduled' ? "bg-blue-100 text-blue-700" :
-          item.status === 'Review' ? "bg-amber-100 text-amber-700" :
-          "bg-slate-100 text-slate-600"
+          "text-[10px] uppercase font-black tracking-widest px-2 py-0.5 rounded-sm shadow-sm",
+          item.status === 'Published' ? "bg-emerald-600 text-white" :
+          item.status === 'Scheduled' ? "bg-blue-600 text-white" :
+          item.status === 'Review' ? "bg-amber-500 text-white" :
+          "bg-slate-500 text-white"
         )}>
           {item.status}
         </span>

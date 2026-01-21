@@ -4,8 +4,12 @@ import { cn } from "@/lib/utils";
 import {
   CalendarDays,
   KanbanSquare,
+  Globe,
+  Loader2
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
 
 export function SidebarNav() {
   const [location] = useLocation();
@@ -49,6 +53,40 @@ export function SidebarNav() {
           );
         })}
       </nav>
+
+      {/* Google Calendar Connection Status */}
+      <div className="px-4 py-3 border-t border-border/50">
+        <div className="p-3 bg-primary/5 rounded-xl border border-primary/10">
+          <div className="flex items-center gap-2 mb-2">
+            <Globe className={cn("w-4 h-4", user?.googleCalendarEnabled ? "text-emerald-500" : "text-muted-foreground")} />
+            <span className="text-xs font-semibold text-foreground">Google Calendar</span>
+          </div>
+          
+          {user?.googleCalendarEnabled ? (
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[10px] text-muted-foreground">Connected & Syncing</span>
+            </div>
+          ) : (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="w-full text-[10px] h-7 bg-background hover:bg-primary/10 hover:text-primary transition-colors"
+              onClick={async () => {
+                try {
+                  const res = await fetch('/api/google/auth');
+                  const { authUrl } = await res.json();
+                  if (authUrl) window.location.href = authUrl;
+                } catch (err) {
+                  console.error('Failed to start Google Auth:', err);
+                }
+              }}
+            >
+              Connect Calendar
+            </Button>
+          )}
+        </div>
+      </div>
 
       <div className="p-4 border-t border-border/50">
         <div className="bg-muted/50 rounded-xl p-4 flex items-center gap-3">

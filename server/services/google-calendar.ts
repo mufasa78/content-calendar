@@ -4,6 +4,7 @@ import { db } from '../db';
 import { users } from '@shared/models/auth';
 import { contentItems } from '@shared/schema';
 import { eq } from 'drizzle-orm';
+import { userCache, cacheKeys } from '../cache';
 
 const SCOPES = ['https://www.googleapis.com/auth/calendar.events'];
 
@@ -45,6 +46,9 @@ export class GoogleCalendarService {
         updatedAt: new Date(),
       })
       .where(eq(users.id, userId));
+
+    // Invalidate user cache
+    userCache.delete(cacheKeys.user(userId));
   }
 
   /**
@@ -74,6 +78,9 @@ export class GoogleCalendarService {
           updatedAt: new Date(),
         })
         .where(eq(users.id, userId));
+      
+      // Invalidate user cache
+      userCache.delete(cacheKeys.user(userId));
       
       this.oauth2Client.setCredentials(credentials);
     }
@@ -168,6 +175,9 @@ export class GoogleCalendarService {
         updatedAt: new Date(),
       })
       .where(eq(users.id, userId));
+
+    // Invalidate user cache
+    userCache.delete(cacheKeys.user(userId));
   }
 
   /**

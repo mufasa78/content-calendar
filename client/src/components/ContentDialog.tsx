@@ -9,10 +9,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useCreateContent, useUpdateContent, useDeleteContent } from "@/hooks/use-content";
-import { CalendarIcon, Trash2, Wand2 } from "lucide-react";
+import { useCreateContent, useUpdateContent, useDeleteContent, useSyncGoogleCalendar } from "@/hooks/use-content";
+import { CalendarIcon, Trash2, Wand2, RefreshCw, CheckCircle2 } from "lucide-react";
 import { format } from "date-fns";
 import { useAuth } from "@/hooks/use-auth";
+import { cn } from "@/lib/utils";
 
 interface ContentDialogProps {
   open: boolean;
@@ -26,6 +27,7 @@ export function ContentDialog({ open, onOpenChange, initialData, defaultDate }: 
   const createMutation = useCreateContent();
   const updateMutation = useUpdateContent();
   const deleteMutation = useDeleteContent();
+  const syncMutation = useSyncGoogleCalendar();
 
   const form = useForm<InsertContentItem>({
     resolver: zodResolver(insertContentItemSchema),
@@ -60,7 +62,7 @@ export function ContentDialog({ open, onOpenChange, initialData, defaultDate }: 
         title: "",
         brief: "",
         platform: "LinkedIn",
-        status: "Draft",
+        status: defaultDate ? "Scheduled" : "Draft",
         kanbanStage: "Creation",
         userId: user?.id || "",
         scheduledAt: defaultDate,
@@ -97,7 +99,7 @@ export function ContentDialog({ open, onOpenChange, initialData, defaultDate }: 
     }
   };
 
-  const isPending = createMutation.isPending || updateMutation.isPending || deleteMutation.isPending;
+  const isPending = createMutation.isPending || updateMutation.isPending || deleteMutation.isPending || syncMutation.isPending;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -157,10 +159,30 @@ export function ContentDialog({ open, onOpenChange, initialData, defaultDate }: 
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Draft">Draft</SelectItem>
-                      <SelectItem value="Review">Review</SelectItem>
-                      <SelectItem value="Scheduled">Scheduled</SelectItem>
-                      <SelectItem value="Published">Published</SelectItem>
+                      <SelectItem value="Draft">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-slate-500" />
+                          <span>Draft</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="Review">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-amber-500" />
+                          <span className="font-bold">Review Needed</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="Scheduled">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-blue-600" />
+                          <span className="font-bold">Scheduled</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="Published">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-emerald-600" />
+                          <span className="font-bold">Published</span>
+                        </div>
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -244,15 +266,40 @@ export function ContentDialog({ open, onOpenChange, initialData, defaultDate }: 
 
           <DialogFooter className="flex justify-between items-center sm:justify-between w-full">
             {initialData ? (
-              <Button 
-                type="button" 
-                variant="destructive" 
-                size="icon" 
-                onClick={handleDelete}
-                disabled={isPending}
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  type="button" 
+                  variant="destructive" 
+                  size="icon" 
+                  onClick={handleDelete}
+                  disabled={isPending}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+                
+                {user?.googleCalendarEnabled && initialData.scheduledAt && (
+                   <Button
+                     type="button"
+                     variant="outline"
+                     size="sm"
+                     onClick={() => syncMutation.mutate(initialData.id)}
+                     disabled={isPending}
+                     className={cn(
+                       "flex items-center gap-2",
+                       initialData.googleCalendarEventId && "text-emerald-500 border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/10"
+                     )}
+                   >
+                     {syncMutation.isPending ? (
+                       <RefreshCw className="w-3 h-3 animate-spin" />
+                     ) : initialData.googleCalendarEventId ? (
+                       <CheckCircle2 className="w-3 h-3" />
+                     ) : (
+                       <RefreshCw className="w-3 h-3" />
+                     )}
+                     {initialData.googleCalendarEventId ? "Sync Refreshed" : "Sync to Google"}
+                   </Button>
+                )}
+              </div>
             ) : <div />}
             
             <div className="flex gap-2">

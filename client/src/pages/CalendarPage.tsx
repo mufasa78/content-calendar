@@ -102,9 +102,9 @@ export default function CalendarPage() {
 
 function getStatusColor(status: string) {
   switch (status) {
-    case 'Published': return '#10b981'; // emerald-500
-    case 'Scheduled': return '#3b82f6'; // blue-500
-    case 'Review': return '#f59e0b'; // amber-500
-    default: return '#94a3b8'; // slate-400
+    case 'Published': return '#059669'; // emerald-600
+    case 'Scheduled': return '#2563eb'; // blue-600
+    case 'Review': return '#d97706'; // amber-600
+    default: return '#475569'; // slate-600
   }
 }

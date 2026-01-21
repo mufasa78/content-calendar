@@ -50,7 +50,9 @@ export const contentItems = pgTable("content_items", {
   scheduledAtIdx: index("content_items_scheduled_at_idx").on(table.scheduledAt),
 }));
 
-export const insertContentItemSchema = createInsertSchema(contentItems).omit({ 
+export const insertContentItemSchema = createInsertSchema(contentItems, {
+  scheduledAt: z.coerce.date().nullable(),
+}).omit({ 
   id: true, 
   createdAt: true, 
   updatedAt: true 

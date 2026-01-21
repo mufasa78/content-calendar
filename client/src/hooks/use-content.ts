@@ -197,3 +197,39 @@ export function useDeleteContent() {
     },
   });
 }
+
+export function useSyncGoogleCalendar() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const res = await fetch(`/api/google/sync/${id}`, {
+        method: "POST",
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Failed to sync to Google Calendar");
+      }
+      return res.json();
+    },
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: [api.content.list.path] });
+      queryClient.invalidateQueries({ queryKey: [api.content.get.path, id] });
+      toast({ 
+        title: "Synced", 
+        description: "Content successfully synced to Google Calendar",
+        variant: "default" 
+      });
+    },
+    onError: (error) => {
+      toast({ 
+        title: "Sync Failed", 
+        description: error.message, 
+        variant: "destructive" 
+      });
+    },
+  });
+}
